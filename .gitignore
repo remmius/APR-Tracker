@@ -1,0 +1,5 @@
+**/.terraform
+**/generated/*
+*-key.json
+*.terraform.lock*
+*.tfstate*

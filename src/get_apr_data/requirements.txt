@@ -1,0 +1,3 @@
+etherscan-python
+web3
+google-cloud-storage
