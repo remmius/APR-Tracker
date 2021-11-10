@@ -13,7 +13,7 @@ storage_client = storage.Client()
 BUCKET_NAME=os.getenv('DATA_BUCKET')
 
 BASE_PATH="/tmp/"
-RECIEVER_EMAIL="YOUREMAIL@xyz.xy"
+RECIEVER_EMAIL="xxx@yyy.de"
 Contracts={
         "Yearn-crvDUSD":"0x30FCf7c6cDfC46eC237783D94Fc78553E79d4E9C",
         "Yearn-crvUSDN":"0x3B96d491f067912D18563d56858Ba7d6EC67a6fa",
@@ -39,6 +39,9 @@ Contracts={
         
         "Yearn-crvTBTC":"0x23D3D0f1c697247d5e0a9efB37d8b0ED0C464f7f",
         "CURVE-crvTBTC":"0xC25099792E9349C7DD09759744ea681C7de2cb66",
+        
+        "Yearn-crvMIM":"0x2DfB14E32e2F8156ec15a2c21c3A6c053af52Be8",
+        "CURVE-crvMIM":"0x5a6A4D54456819380173272A5E8E9B9904BdF41B",
         }
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
@@ -101,8 +104,8 @@ def get_last_apr():
         if not ("USDC" in name):
                 total_row=data[1].split("\n")[0]
                 last_row=data[-1].split("\n")[0]
-                month_row=get_row_with_age(data,3600*24*365/12)
-                bi_week_row=get_row_with_age(data,3600*24*14)
+                month_row=get_row_with_age(data,3600*24*365/12*3)
+                bi_week_row=get_row_with_age(data,3600*24*365/12*1)
                 week_row=get_row_with_age(data,3600*24*7)
                 
                 apr_total=calc_apr(last_row,total_row,n)
@@ -137,7 +140,7 @@ def get_last_apr():
 def prepare_email(data):   
     
     table = PrettyTable()
-    headline=["Pool-Name","Weekly-[%] ","BiWeekly-[%]", "Monthly-[%]", "Total-APR %"]    
+    headline=["Pool","Weekly[%] ","Monthly[%]", "Tri-Monthly[%]", "Total-APR[%"]    
     table.field_names = headline
     #fill table
     for pool in data:

@@ -47,6 +47,11 @@ Contracts={
         
         "Yearn-crvTBTC":"0x23D3D0f1c697247d5e0a9efB37d8b0ED0C464f7f",
         "CURVE-crvTBTC":"0xC25099792E9349C7DD09759744ea681C7de2cb66",
+        
+        "Yearn-crvMIM":"0x2DfB14E32e2F8156ec15a2c21c3A6c053af52Be8",
+        "CURVE-crvMIM":"0x5a6A4D54456819380173272A5E8E9B9904BdF41B",
+        
+        
         }
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
