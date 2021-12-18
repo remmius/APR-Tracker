@@ -67,18 +67,26 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
                     source_blob_name, destination_file_name
                 )
             )
-          
+
+def get_oldest_row(data,name):    
+    for k in range(len(data)-1):
+        if not (name in data[-(1+k)]):
+            return data[-(k)]
+    return data[1].split("\n")[0]
 
 def calc_apr(row_new,row_old,index):
-    dy=float(row_new.split(",")[2+2*index])-float(row_old.split(",")[2+2*index])
-    dt=int(row_new.split(",")[0])-int(row_old.split(",")[0]) 
-    apr=round(dy/dt*3600*24*365*100,1)
+    try:
+        dy=float(row_new.split(",")[2+2*index])-float(row_old.split(",")[2+2*index])
+        dt=int(row_new.split(",")[0])-int(row_old.split(",")[0])+0.000000001 
+        apr=round(dy/dt*3600*24*365*100,1)
+    except Exception as e:
+        print(e)
+        return "-"
     return apr
 
 def get_row_with_age(data,age):
     t_now=int(data[-1].split(",")[0])
     for k in range(len(data)-1):
-        print(data[-(1+k)])
         if (t_now - int(data[-(1+k)].split(",")[0]) > age):
             return data[-(1+k)].split("\n")[0]
     print("no row with age of ",age,"found")
@@ -102,29 +110,26 @@ def get_last_apr():
         name=data[-1].split(",")[1+2*n]
         #if not ("CURVE" in name):
         if not ("USDC" in name):
-                total_row=data[1].split("\n")[0]
+                #total_row=data[1].split("\n")[0]
+                total_row=get_oldest_row(data,name)
                 last_row=data[-1].split("\n")[0]
-                month_row=get_row_with_age(data,3600*24*365/12*3)
-                bi_week_row=get_row_with_age(data,3600*24*365/12*1)
-                week_row=get_row_with_age(data,3600*24*7)
-                
+                ages=[3600*24*7,3600*24*365/12*1,3600*24*365/12*3]
+                apy_data["Time-period"]=[]
+                apy_data[name]=[]
+                for age in ages:
+                     age_row=get_row_with_age(data,age)
+                     apr_age=calc_apr(last_row,age_row,n)       
+                     time_age=create_timestamp_diff_short(last_row,age_row)
+                     apy_data["Time-period"].append(time_age)
+                     apy_data[name].append(apr_age)
+
                 apr_total=calc_apr(last_row,total_row,n)
+                total_row=data[1].split("\n")[0]
                 time_total=create_timestamp_diff(last_row,total_row)   
-                
-                apr_month=calc_apr(last_row,month_row,n)
-                time_month=create_timestamp_diff_short(last_row,month_row)
-                
-                apr_week=calc_apr(last_row,week_row,n)
-                time_week=create_timestamp_diff_short(last_row,week_row)
-                
-                apr_biweek=calc_apr(last_row,bi_week_row,n) 
-                time_biweek=create_timestamp_diff_short(last_row,bi_week_row)
-                
-                apy_data["Time-period"]=[time_week,time_biweek,time_month,time_total]
-                apy_data[name]=[apr_week,apr_biweek,apr_month,apr_total]
-    print(apy_data)
+                apy_data["Time-period"].append(time_total)
+                apy_data[name].append(apr_total)
     apy_data_final=dict()
-    apy_data_final["Time-period"]=[time_week,time_biweek,time_month,time_total]
+    apy_data_final["Time-period"]=apy_data["Time-period"]
     for key in apy_data.keys():
         if ("Yearn" in key):
             yearn_apy=apy_data[key]
@@ -132,13 +137,16 @@ def get_last_apr():
             curve_apy=apy_data.get(curve_key,[0,0,0,0])
             apy_data_final[key]=list()
             for k in range(len(yearn_apy)):
-                combined_apy=round(((yearn_apy[k]/100+1)*(curve_apy[k]/100+1)-1)*100,1)
+                if(type(yearn_apy[k]) !=str and curve_apy[k]!=str):
+                    combined_apy=round(((yearn_apy[k]/100+1)*(curve_apy[k]/100+1)-1)*100,1)
+                else:
+                    combined_apy="-"
                 apy_data_final[key].append(combined_apy)
     print(apy_data_final)
     return apy_data_final
     
 def prepare_email(data):   
-    
+    print("prepare-email")
     table = PrettyTable()
     headline=["Pool","Weekly[%] ","Monthly[%]", "Tri-Monthly[%]", "Total-APR[%"]    
     table.field_names = headline
@@ -150,6 +158,7 @@ def prepare_email(data):
     return table.get_string()
     
 def send_email(data):
+    print("send-email")
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     import smtplib, ssl
